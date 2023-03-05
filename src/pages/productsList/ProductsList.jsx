@@ -13,7 +13,7 @@ import sampleProduct from "../../assets/imgs/list/Bitmap.png";
 import product4 from "../../assets/imgs/list/Group 6.png";
 
 import styles from "./ProductsList.module.css";
-import { useDebounce } from "../../hooks/useDebounce";
+// import { useDebounce } from "../../hooks/useDebounce";
 import {
   searchProducts,
   sortAtoZ,
@@ -22,6 +22,7 @@ import {
   sortZtoA,
 } from "../../store/products/ProductsSlice";
 import RelatedProducts from "../../components/relatedProducts/RelatedProducts";
+import { Skeleton } from "@mui/material";
 
 const ProductsList = () => {
   const productsArray = [
@@ -103,11 +104,10 @@ const ProductsList = () => {
     },
   ];
   const dispatch = useDispatch();
-  const { products, filteredProducts, enableFilter } = useSelector(
+  const { products, filteredProducts, enableFilter, is_loading } = useSelector(
     (state) => state.products
   );
   const [productsToShow, setProductsToShow] = useState(productsArray);
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
 
   const currency = "$";
 
@@ -115,45 +115,33 @@ const ProductsList = () => {
     dispatch({ type: "products/setProducts", payload: productsArray });
   }, []);
 
-  const [searchTerm, setSearchTerm] = useState("");
+  // Search Filter
 
+  // when the user types in the search box , the value that is stored is the old value, so we need to use the useDebounce hook to delay the search
+
+  const handleSearchFilter = (event) => {
+    dispatch(searchProducts(event.target.value));
+  };
+
+  // Price Filter
   const [minPrice, setMinPrice] = useState(
     Math.min(...productsArray.map((product) => product.newPrice))
   );
-  const debouncedMinPrice = useDebounce(minPrice, 500);
 
   const [maxPrice, setMaxPrice] = useState(
     Math.max(...productsArray.map((product) => product.newPrice))
   );
-  const debouncedMaxPrice = useDebounce(maxPrice, 500);
 
   const [value, setValue] = useState([
     Math.min(...productsArray.map((product) => product.newPrice)),
     Math.max(...productsArray.map((product) => product.newPrice)),
   ]);
 
-  const handlePriceFilter = (event, newValue) => {
+  const handlePriceFilter = (newValue) => {
     setValue(newValue);
     setMinPrice(newValue[0]);
     setMaxPrice(newValue[1]);
-    dispatch({
-      type: "products/priceFilter",
-      payload: { min: debouncedMinPrice, max: debouncedMaxPrice },
-    });
   };
-
-  const handleSearchFilter = (event) => {
-    setSearchTerm(event.target.value);
-    dispatch(searchProducts(debouncedSearchTerm));                
-  };
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-    }, 500);
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [searchTerm]);
 
   useEffect(() => {
     if (enableFilter) {
@@ -202,22 +190,33 @@ const ProductsList = () => {
             </select>
           </div>
           <div className={styles.products_grid}>
-            {productsToShow?.map((product) => (
-              <ProductCard
-                key={product.id}
-                title={product.title}
-                newPrice={
-                  product.newPrice &&
-                  `${currency}${product.newPrice.toFixed(2)}`
-                }
-                oldPrice={
-                  product.oldPrice &&
-                  `${currency}${product.oldPrice.toFixed(2)}`
-                }
-                category={product.category}
-                image={product.image}
-              />
-            ))}
+            {is_loading
+              ? [1, 2, 3, 4, 5, 6].map((i) => (
+                  <Skeleton
+                    key={i}
+                    variant="rectangular"
+                    width={window.innerWidth > 600 ? 150 : 100}
+                    height={window.innerWidth > 600 ? 300 : 200}
+                    sx={{ borderRadius: "20px", marginBottom: "20px" }}
+                  />
+                ))
+              : productsToShow?.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    id={product.id}
+                    title={product.title}
+                    newPrice={
+                      product.newPrice &&
+                      `${currency}${product.newPrice.toFixed(2)}`
+                    }
+                    oldPrice={
+                      product.oldPrice &&
+                      `${currency}${product.oldPrice.toFixed(2)}`
+                    }
+                    category={product.category}
+                    image={product.image}
+                  />
+                ))}
           </div>
         </div>
         <div className={styles.products_filters}>
@@ -273,7 +272,20 @@ const ProductsList = () => {
               />
             </Box>
             <div className={styles.products_priceSorting__indicator}>
-              PRICE: ${value[0]} - ${value[1]}
+              <div className={styles.products_priceSorting_values}>
+                PRICE: ${value[0]} - ${value[1]}
+              </div>
+              <div
+                className={styles.products_priceSorting_apply}
+                onClick={() => {
+                  dispatch({
+                    type: "products/priceFilter",
+                    payload: { min: minPrice, max: maxPrice },
+                  });
+                }}
+              >
+                APPLY
+              </div>
             </div>
           </div>
           <div className={styles.products_label}>

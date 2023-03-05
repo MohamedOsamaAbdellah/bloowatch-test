@@ -14,3 +14,12 @@
   text-align: center;
   margin: 0 15vw;
 }
+@media (max-width: 768px) {
+  .container__title {
+    font-size: 20px;
+    margin: 0 5vw;
+  }
+  .container {
+    height: 20vh;
+  }
+}

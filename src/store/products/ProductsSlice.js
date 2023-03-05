@@ -4,6 +4,7 @@ const initialState = {
   products: [],
   filteredProducts: [],
   enableFilter: false,
+  is_loading: true,
 };
 
 export const productsSlice = createSlice({
@@ -12,8 +13,10 @@ export const productsSlice = createSlice({
   reducers: {
     setProducts: (state, action) => {
       state.products = action.payload;
+      state.is_loading = false;
     },
     searchProducts: (state, action) => {
+      state.is_loading = false;
       state.enableFilter = true;
       state.filteredProducts = state.products.filter((product) => {
         return product.title
@@ -23,6 +26,7 @@ export const productsSlice = createSlice({
       // if action.payload is empty, then return all products
     },
     priceFilter: (state, action) => {
+      state.is_loading = false;
       state.enableFilter = true;
       state.filteredProducts = state.products.filter((product) => {
         return (
@@ -32,23 +36,28 @@ export const productsSlice = createSlice({
       });
     },
     categoryFilter: (state, action) => {
+      state.is_loading = false;
       state.enableFilter = true;
       state.filteredProducts = state.products.filter((product) => {
         return product.category === action.payload.category;
       });
     },
     sortByPriceLowToHigh: (state) => {
+      state.is_loading = false;
       state.products = state.products.sort((a, b) => a.newPrice - b.newPrice);
     },
     sortByPriceHighToLow: (state) => {
+      state.is_loading = false;
       state.products = state.products.sort((a, b) => b.newPrice - a.newPrice);
     },
     sortAtoZ: (state) => {
+      state.is_loading = false;
       state.products = state.products.sort((a, b) =>
         a.title.localeCompare(b.title)
       );
     },
     sortZtoA: (state) => {
+      state.is_loading = false;
       state.products = state.products.sort((a, b) =>
         b.title.localeCompare(a.title)
       );
