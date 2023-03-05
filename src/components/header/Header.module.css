@@ -1,0 +1,16 @@
+.container {
+  background-color: #0c0eb7;
+  height: 25vh;
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  /* margin: auto; */
+}
+.container__title {
+  font-size: 26px;
+  color: #fff;
+  font-weight: 100;
+  text-align: center;
+  margin: 0 15vw;
+}
