@@ -273,7 +273,7 @@ const ProductsList = () => {
             </Box>
             <div className={styles.products_priceSorting__indicator}>
               <div className={styles.products_priceSorting_values}>
-                PRICE: ${value[0]} - ${value[1]}
+                PRICE: ${minPrice} - ${maxPrice}
               </div>
               <div
                 className={styles.products_priceSorting_apply}
