@@ -137,11 +137,12 @@ const ProductsList = () => {
     Math.max(...productsArray.map((product) => product.newPrice)),
   ]);
 
-  const handlePriceFilter = (newValue) => {
+  const handlePriceFilter = (event, newValue) => {
     setValue(newValue);
     setMinPrice(newValue[0]);
     setMaxPrice(newValue[1]);
   };
+  
 
   useEffect(() => {
     if (enableFilter) {
