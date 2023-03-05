@@ -24,10 +24,6 @@ import {
 import RelatedProducts from "../../components/relatedProducts/RelatedProducts";
 
 const ProductsList = () => {
-  const dispatch = useDispatch();
-  const { products } = useSelector((state) => state.products);
-
-  const currency = "$";
   const productsArray = [
     {
       id: 1,
@@ -78,48 +74,6 @@ const ProductsList = () => {
       image: product1,
     },
   ];
-
-  useEffect(() => {
-    dispatch({ type: "products/setProducts", payload: productsArray });
-  }, []);
-
-  const [searchTerm, setSearchTerm] = useState("");
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
-  console.log("debouncedSearchTerm", debouncedSearchTerm);
-
-  const [minPrice, setMinPrice] = useState(
-    Math.min(...productsArray.map((product) => product.newPrice))
-  );
-  const debouncedMinPrice = useDebounce(minPrice, 500);     
-
-  const [maxPrice, setMaxPrice] = useState(
-    Math.max(...productsArray.map((product) => product.newPrice))
-  );
-  const debouncedMaxPrice = useDebounce(maxPrice, 500);
-
-  const [value, setValue] = useState([
-    Math.min(...productsArray.map((product) => product.newPrice)),
-    Math.max(...productsArray.map((product) => product.newPrice)),
-  ]);
-
-  const handlePriceFilter = (event, newValue) => {
-    setValue(newValue);
-    setMinPrice(newValue[0]);
-    setMaxPrice(newValue[1]);
-    dispatch({
-      type: "products/priceFilter",
-      payload: { min: debouncedMinPrice, max: debouncedMaxPrice },
-    });
-  };
-
-  const handleSearchFilter = (event) => {
-    setSearchTerm(event.target.value);
-    dispatch({
-      type: "products/searchProducts",
-      payload: debouncedSearchTerm,
-    });
-  };
-
   const categories = [
     "Surfing",
     "Windsurfing",
@@ -148,6 +102,66 @@ const ProductsList = () => {
       stars: 3,
     },
   ];
+  const dispatch = useDispatch();
+  const { products, filteredProducts, enableFilter } = useSelector(
+    (state) => state.products
+  );
+  const [productsToShow, setProductsToShow] = useState(productsArray);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+
+  const currency = "$";
+
+  useEffect(() => {
+    dispatch({ type: "products/setProducts", payload: productsArray });
+  }, []);
+
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const [minPrice, setMinPrice] = useState(
+    Math.min(...productsArray.map((product) => product.newPrice))
+  );
+  const debouncedMinPrice = useDebounce(minPrice, 500);
+
+  const [maxPrice, setMaxPrice] = useState(
+    Math.max(...productsArray.map((product) => product.newPrice))
+  );
+  const debouncedMaxPrice = useDebounce(maxPrice, 500);
+
+  const [value, setValue] = useState([
+    Math.min(...productsArray.map((product) => product.newPrice)),
+    Math.max(...productsArray.map((product) => product.newPrice)),
+  ]);
+
+  const handlePriceFilter = (event, newValue) => {
+    setValue(newValue);
+    setMinPrice(newValue[0]);
+    setMaxPrice(newValue[1]);
+    dispatch({
+      type: "products/priceFilter",
+      payload: { min: debouncedMinPrice, max: debouncedMaxPrice },
+    });
+  };
+
+  const handleSearchFilter = (event) => {
+    setSearchTerm(event.target.value);
+    dispatch(searchProducts(debouncedSearchTerm));                
+  };
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm]);
+
+  useEffect(() => {
+    if (enableFilter) {
+      setProductsToShow(filteredProducts);
+    } else {
+      setProductsToShow(products);
+    }
+  }, [filteredProducts, products, enableFilter]);
 
   return (
     <>
@@ -163,40 +177,32 @@ const ProductsList = () => {
               name="sorting"
               id="sorting"
               className={styles.products_sorting}
-            >
-              <option
-                value="default"
-                onClick={() => {
+              onChange={(e) => {
+                if (e.target.value === "default") {
                   dispatch({
                     type: "products/setProducts",
                     payload: productsArray,
                   });
-                }}
-              >
-                Default Sorting
-              </option>
-              <option
-                value="low-high"
-                onClick={dispatch(sortByPriceLowToHigh())}
-              >
-                Low to High
-              </option>
-              <option
-                value="high-low"
-                onClick={dispatch(sortByPriceHighToLow())}
-              >
-                High to Low
-              </option>
-              <option value="a-z" onClick={dispatch(sortAtoZ())}>
-                A to Z
-              </option>
-              <option value="z-a" onClick={dispatch(sortZtoA())}>
-                Z to A
-              </option>
+                } else if (e.target.value === "low-high") {
+                  dispatch(sortByPriceLowToHigh());
+                } else if (e.target.value === "high-low") {
+                  dispatch(sortByPriceHighToLow());
+                } else if (e.target.value === "a-z") {
+                  dispatch(sortAtoZ());
+                } else if (e.target.value === "z-a") {
+                  dispatch(sortZtoA());
+                }
+              }}
+            >
+              <option value="default">Default Sorting</option>
+              <option value="low-high">Low to High</option>
+              <option value="high-low">High to Low</option>
+              <option value="a-z">A to Z</option>
+              <option value="z-a">Z to A</option>
             </select>
           </div>
           <div className={styles.products_grid}>
-            {products?.map((product) => (
+            {productsToShow?.map((product) => (
               <ProductCard
                 key={product.id}
                 title={product.title}
@@ -222,7 +228,7 @@ const ProductsList = () => {
               type="text"
               name="search"
               id="search"
-              onChange={handleSearchFilter}
+              onChange={(e) => handleSearchFilter(e)}
             />
           </div>
           <div className={styles.products_label}>
@@ -236,13 +242,13 @@ const ProductsList = () => {
                 onChange={handlePriceFilter}
                 valueLabelDisplay="auto"
                 getAriaValueText={(value) => `$${value}`}
-                min={products.reduce(
+                min={productsArray.reduce(
                   (min, p) => (p.newPrice < min ? p.newPrice : min),
-                  products[0]?.newPrice
+                  productsArray[0]?.newPrice
                 )}
-                max={products.reduce(
+                max={productsArray.reduce(
                   (max, p) => (p.newPrice > max ? p.newPrice : max),
-                  products[0]?.newPrice
+                  productsArray[0]?.newPrice
                 )}
                 sx={{
                   color: "#0c0eb7",

@@ -2,6 +2,8 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   products: [],
+  filteredProducts: [],
+  enableFilter: false,
 };
 
 export const productsSlice = createSlice({
@@ -12,14 +14,17 @@ export const productsSlice = createSlice({
       state.products = action.payload;
     },
     searchProducts: (state, action) => {
-      state.products = state.products.filter((product) => {
+      state.enableFilter = true;
+      state.filteredProducts = state.products.filter((product) => {
         return product.title
           .toLowerCase()
           .includes(action.payload.toLowerCase());
       });
+      // if action.payload is empty, then return all products
     },
     priceFilter: (state, action) => {
-      state.products = state.products.filter((product) => {
+      state.enableFilter = true;
+      state.filteredProducts = state.products.filter((product) => {
         return (
           product.newPrice >= action.payload.min &&
           product.newPrice <= action.payload.max
@@ -27,7 +32,8 @@ export const productsSlice = createSlice({
       });
     },
     categoryFilter: (state, action) => {
-      state.products = state.products.filter((product) => {
+      state.enableFilter = true;
+      state.filteredProducts = state.products.filter((product) => {
         return product.category === action.payload.category;
       });
     },
